@@ -6,6 +6,26 @@
         <label class="form-label">Title</label>
         <input name="title" class="form-control" value="{{ task.title if task else '' }}">
     </div>
+    <div class="mb-3">
+        <label class="form-label">Description</label>
+        <textarea name="description" class="form-control">{{ task.description if task else '' }}</textarea>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Priority</label>
+        <input name="priority" type="number" class="form-control" value="{{ task.priority if task else 0 }}">
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Due date</label>
+        <input name="due_date" type="date" class="form-control" value="{{ task.due_date if task and task.due_date else '' }}">
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-control">
+            {% for s in ['todo','doing','done'] %}
+            <option value="{{s}}" {% if task and task.status==s %}selected{% endif %}>{{s.title()}}</option>
+            {% endfor %}
+        </select>
+    </div>
     <button class="btn btn-primary" type="submit">Save</button>
     <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
 </form>

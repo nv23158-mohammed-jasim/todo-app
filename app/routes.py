@@ -13,10 +13,20 @@ def index():
 def create_task():
     if request.method == "POST":
         title = request.form.get("title")
+        description = request.form.get("description")
+        priority = request.form.get("priority", type=int)
+        due_date = request.form.get("due_date")
+        status = request.form.get("status")
         if not title:
             flash("Title is required.")
         else:
-            task = Task(title=title)
+            task = Task(
+                title=title,
+                description=description,
+                priority=priority or 0,
+                due_date=due_date or None,
+                status=status or "todo",
+            )
             db.session.add(task)
             db.session.commit()
             return redirect(url_for("index"))
@@ -28,10 +38,18 @@ def edit_task(task_id):
     task = Task.query.get_or_404(task_id)
     if request.method == "POST":
         title = request.form.get("title")
+        description = request.form.get("description")
+        priority = request.form.get("priority", type=int)
+        due_date = request.form.get("due_date")
+        status = request.form.get("status")
         if not title:
             flash("Title is required.")
         else:
             task.title = title
+            task.description = description
+            task.priority = priority or 0
+            task.due_date = due_date or None
+            task.status = status or task.status
             db.session.commit()
             return redirect(url_for("index"))
     return render_template("task_form.html", task=task)
