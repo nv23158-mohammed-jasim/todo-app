@@ -5,8 +5,14 @@ from .models import Task
 
 @app.route("/")
 def index():
-    tasks = Task.query.order_by(Task.id.desc()).all()
-    return render_template("index.html", tasks=tasks)
+    q = request.args.get("q", "").strip()
+    if q:
+        tasks = Task.query.filter(
+            (Task.title.ilike(f"%{q}%")) | (Task.description.ilike(f"%{q}%"))
+        ).order_by(Task.id.desc()).all()
+    else:
+        tasks = Task.query.order_by(Task.id.desc()).all()
+    return render_template("index.html", tasks=tasks, search_query=q)
 
 
 @app.route("/task/create", methods=["GET", "POST"])
