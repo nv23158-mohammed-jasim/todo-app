@@ -3,16 +3,62 @@ from . import db
 from .models import Task
 
 
+from flask import current_app as app, render_template, request, redirect, url_for, flash
+from . import db
+from .models import Task
+from datetime import datetime, timedelta
+
+
 @app.route("/")
 def index():
     q = request.args.get("q", "").strip()
+    status_filter = request.args.get("status", "")
+    priority_filter = request.args.get("priority", "")
+    sort_by = request.args.get("sort_by", "created_at")
+    sort_order = request.args.get("sort_order", "desc")
+
+    query = Task.query
+
+    # Search
     if q:
-        tasks = Task.query.filter(
+        query = query.filter(
             (Task.title.ilike(f"%{q}%")) | (Task.description.ilike(f"%{q}%"))
-        ).order_by(Task.id.desc()).all()
+        )
+
+    # Status filter
+    if status_filter:
+        query = query.filter(Task.status == status_filter)
+
+    # Priority filter
+    if priority_filter:
+        try:
+            priority_val = int(priority_filter)
+            query = query.filter(Task.priority == priority_val)
+        except ValueError:
+            pass
+
+    # Sorting
+    if sort_by == "priority":
+        sort_col = Task.priority
+    elif sort_by == "due_date":
+        sort_col = Task.due_date
+    else:  # default to created_at
+        sort_col = Task.created_at
+
+    if sort_order == "asc":
+        tasks = query.order_by(sort_col.asc()).all()
     else:
-        tasks = Task.query.order_by(Task.id.desc()).all()
-    return render_template("index.html", tasks=tasks, search_query=q)
+        tasks = query.order_by(sort_col.desc()).all()
+
+    return render_template(
+        "index.html",
+        tasks=tasks,
+        search_query=q,
+        status_filter=status_filter,
+        priority_filter=priority_filter,
+        sort_by=sort_by,
+        sort_order=sort_order,
+    )
 
 
 @app.route("/task/create", methods=["GET", "POST"])
