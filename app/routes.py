@@ -7,8 +7,19 @@ bp = Blueprint("main", __name__)
 
 @bp.route("/")
 def index():
-    tasks = Task.query.order_by(Task.created_at.desc()).all()
-    return render_template("index.html", tasks=tasks)
+    q = request.args.get("q", "").strip()
+
+    query = Task.query
+
+    if q:
+        query = query.filter(
+            (Task.title.ilike(f"%{q}%")) |
+            (Task.description.ilike(f"%{q}%"))
+        )
+
+    tasks = query.order_by(Task.created_at.desc()).all()
+
+    return render_template("index.html", tasks=tasks, q=q)
 
 @bp.route("/task/create", methods=["GET", "POST"])
 def create_task():

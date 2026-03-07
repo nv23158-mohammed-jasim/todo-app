@@ -6,6 +6,15 @@
 
     <h2 class="mb-3">Todo Tasks</h2>
 
+    <form method="GET" action="{{ url_for('main.index') }}" class="mb-3">
+        <input
+            type="text"
+            name="q"
+            placeholder="Search tasks..."
+            value="{{ q }}"
+            class="form-control">
+    </form>
+
     <a href="{{ url_for('main.create_task') }}" class="btn btn-primary mb-3">New Task</a>
 
     <table class="table table-striped">
@@ -32,17 +41,13 @@
                     {% endif %}
                 </td>
                 <td>{{ task.status }}</td>
-
                 <td>
                     <a href="{{ url_for('main.edit_task', task_id=task.id) }}" class="btn btn-sm btn-warning">Edit</a>
 
-                    <form action="{{ url_for('main.delete_task', task_id=task.id) }}"
-                          method="POST"
-                          style="display:inline;">
+                    <form action="{{ url_for('main.delete_task', task_id=task.id) }}" method="POST" style="display:inline;">
                         <button class="btn btn-sm btn-danger">Delete</button>
                     </form>
                 </td>
-
             </tr>
             {% endfor %}
         </tbody>
