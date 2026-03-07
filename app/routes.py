@@ -1,115 +1,93 @@
-from flask import current_app as app, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from . import db
 from .models import Task
+from datetime import datetime
+
+bp = Blueprint("main", __name__)
 
 
-from flask import current_app as app, render_template, request, redirect, url_for, flash
-from . import db
-from .models import Task
-from datetime import datetime, timedelta
-
-
-@app.route("/")
+@bp.route("/")
 def index():
     q = request.args.get("q", "").strip()
     status_filter = request.args.get("status", "")
-    priority_filter = request.args.get("priority", "")
     sort_by = request.args.get("sort_by", "created_at")
-    sort_order = request.args.get("sort_order", "desc")
 
     query = Task.query
 
-    # Search
+    # search
     if q:
         query = query.filter(
-            (Task.title.ilike(f"%{q}%")) | (Task.description.ilike(f"%{q}%"))
+            (Task.title.ilike(f"%{q}%")) |
+            (Task.description.ilike(f"%{q}%"))
         )
 
-    # Status filter
+    # filter
     if status_filter:
         query = query.filter(Task.status == status_filter)
 
-    # Priority filter
-    if priority_filter:
-        try:
-            priority_val = int(priority_filter)
-            query = query.filter(Task.priority == priority_val)
-        except ValueError:
-            pass
-
-    # Sorting
+    # sorting
     if sort_by == "priority":
-        sort_col = Task.priority
+        query = query.order_by(Task.priority.desc())
     elif sort_by == "due_date":
-        sort_col = Task.due_date
-    else:  # default to created_at
-        sort_col = Task.created_at
-
-    if sort_order == "asc":
-        tasks = query.order_by(sort_col.asc()).all()
+        query = query.order_by(Task.due_date.asc())
     else:
-        tasks = query.order_by(sort_col.desc()).all()
+        query = query.order_by(Task.created_at.desc())
 
-    return render_template(
-        "index.html",
-        tasks=tasks,
-        search_query=q,
-        status_filter=status_filter,
-        priority_filter=priority_filter,
-        sort_by=sort_by,
-        sort_order=sort_order,
-    )
+    tasks = query.all()
+
+    return render_template("index.html", tasks=tasks, q=q)
 
 
-@app.route("/task/create", methods=["GET", "POST"])
+@bp.route("/task/create", methods=["GET", "POST"])
 def create_task():
     if request.method == "POST":
         title = request.form.get("title")
         description = request.form.get("description")
-        priority = request.form.get("priority", type=int)
-        due_date = request.form.get("due_date")
-        status = request.form.get("status")
+        priority = request.form.get("priority", type=int, default=1)
+        due_date_str = request.form.get("due_date")
+        due_date = datetime.strptime(due_date_str, "%Y-%m-%d") if due_date_str else None
+        status = request.form.get("status") or "todo"
+
         if not title:
             flash("Title is required.")
         else:
             task = Task(
                 title=title,
                 description=description,
-                priority=priority or 0,
-                due_date=due_date or None,
-                status=status or "todo",
+                priority=priority,
+                due_date=due_date,
+                status=status
             )
             db.session.add(task)
             db.session.commit()
-            return redirect(url_for("index"))
+            return redirect(url_for("main.index"))
+
     return render_template("task_form.html")
 
 
-@app.route("/task/<int:task_id>/edit", methods=["GET", "POST"])
+@bp.route("/task/<int:task_id>/edit", methods=["GET", "POST"])
 def edit_task(task_id):
     task = Task.query.get_or_404(task_id)
+
     if request.method == "POST":
-        title = request.form.get("title")
-        description = request.form.get("description")
-        priority = request.form.get("priority", type=int)
-        due_date = request.form.get("due_date")
-        status = request.form.get("status")
-        if not title:
-            flash("Title is required.")
-        else:
-            task.title = title
-            task.description = description
-            task.priority = priority or 0
-            task.due_date = due_date or None
-            task.status = status or task.status
-            db.session.commit()
-            return redirect(url_for("index"))
+        task.title = request.form.get("title")
+        task.description = request.form.get("description")
+        task.priority = request.form.get("priority", type=int, default=task.priority)
+
+        due_date_str = request.form.get("due_date")
+        task.due_date = datetime.strptime(due_date_str, "%Y-%m-%d") if due_date_str else None
+
+        task.status = request.form.get("status") or task.status
+
+        db.session.commit()
+        return redirect(url_for("main.index"))
+
     return render_template("task_form.html", task=task)
 
 
-@app.route("/task/<int:task_id>/delete", methods=["POST"])
+@bp.route("/task/<int:task_id>/delete", methods=["POST"])
 def delete_task(task_id):
     task = Task.query.get_or_404(task_id)
     db.session.delete(task)
     db.session.commit()
-    return redirect(url_for("index"))
+    return redirect(url_for("main.index"))
