@@ -1,21 +1,61 @@
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from . import db
+from .models import Task
 from datetime import datetime
-from enum import Enum
 
-class PriorityEnum(Enum):
-    low = 0
-    medium = 1
-    high = 2
+bp = Blueprint("main", __name__)
 
-class Task(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)
-    
-    # NEW FIELDS
-    description = db.Column(db.Text, nullable=True)
-    priority = db.Column(db.Integer, default=PriorityEnum.medium.value)
-    due_date = db.Column(db.DateTime, nullable=True)
+@bp.route("/")
+def index():
+    tasks = Task.query.order_by(Task.created_at.desc()).all()
+    return render_template("index.html", tasks=tasks)
 
-    status = db.Column(db.String(20), default="todo")
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+@bp.route("/task/create", methods=["GET", "POST"])
+def create_task():
+    if request.method == "POST":
+        title = request.form.get("title")
+        description = request.form.get("description")
+        priority = request.form.get("priority", type=int, default=1)
+        due_date_str = request.form.get("due_date")
+        due_date = datetime.strptime(due_date_str, "%Y-%m-%d") if due_date_str else None
+        status = request.form.get("status") or "todo"
+
+        if not title:
+            flash("Title is required.")
+        else:
+            task = Task(
+                title=title,
+                description=description,
+                priority=priority,
+                due_date=due_date,
+                status=status,
+            )
+            db.session.add(task)
+            db.session.commit()
+            return redirect(url_for("main.index"))
+
+    return render_template("task_form.html")
+
+@bp.route("/task/<int:task_id>/edit", methods=["GET", "POST"])
+def edit_task(task_id):
+    task = Task.query.get_or_404(task_id)
+
+    if request.method == "POST":
+        task.title = request.form.get("title")
+        task.description = request.form.get("description")
+        task.priority = request.form.get("priority", type=int, default=task.priority)
+        due_date_str = request.form.get("due_date")
+        task.due_date = datetime.strptime(due_date_str, "%Y-%m-%d") if due_date_str else None
+        task.status = request.form.get("status") or task.status
+
+        db.session.commit()
+        return redirect(url_for("main.index"))
+
+    return render_template("task_form.html", task=task)
+
+@bp.route("/task/<int:task_id>/delete", methods=["POST"])
+def delete_task(task_id):
+    task = Task.query.get_or_404(task_id)
+    db.session.delete(task)
+    db.session.commit()
+    return redirect(url_for("main.index"))

@@ -1,32 +1,95 @@
 {% extends "base.html" %}
 
 {% block content %}
-<form method="post">
-    <div class="mb-3">
-        <label class="form-label">Title</label>
-        <input name="title" class="form-control" value="{{ task.title if task else '' }}">
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Description</label>
-        <textarea name="description" class="form-control">{{ task.description if task else '' }}</textarea>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Priority</label>
-        <input name="priority" type="number" class="form-control" value="{{ task.priority if task else 0 }}">
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Due date</label>
-        <input name="due_date" type="date" class="form-control" value="{{ task.due_date if task and task.due_date else '' }}">
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Status</label>
-        <select name="status" class="form-control">
-            {% for s in ['todo','doing','done'] %}
-            <option value="{{s}}" {% if task and task.status==s %}selected{% endif %}>{{s.title()}}</option>
-            {% endfor %}
-        </select>
-    </div>
-    <button class="btn btn-primary" type="submit">Save</button>
-    <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
-</form>
+
+<div class="container mt-4">
+
+    <h2 class="mb-3">
+        {% if task %}
+            Edit Task
+        {% else %}
+            Create Task
+        {% endif %}
+    </h2>
+
+    <form method="POST">
+
+        <div class="mb-3">
+            <label class="form-label">Title</label>
+            <input
+                type="text"
+                name="title"
+                class="form-control"
+                value="{{ task.title if task else '' }}"
+                required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea
+                name="description"
+                class="form-control">{{ task.description if task else '' }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Priority</label>
+            <select name="priority" class="form-control">
+
+                <option value="0"
+                    {% if task and task.priority == 0 %}selected{% endif %}>
+                    Low
+                </option>
+
+                <option value="1"
+                    {% if not task or task.priority == 1 %}selected{% endif %}>
+                    Medium
+                </option>
+
+                <option value="2"
+                    {% if task and task.priority == 2 %}selected{% endif %}>
+                    High
+                </option>
+
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Due Date</label>
+            <input
+                type="date"
+                name="due_date"
+                class="form-control"
+                value="{{ task.due_date.strftime('%Y-%m-%d') if task and task.due_date else '' }}">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-control">
+
+                <option value="todo"
+                    {% if not task or task.status == "todo" %}selected{% endif %}>
+                    Todo
+                </option>
+
+                <option value="doing"
+                    {% if task and task.status == "doing" %}selected{% endif %}>
+                    Doing
+                </option>
+
+                <option value="done"
+                    {% if task and task.status == "done" %}selected{% endif %}>
+                    Done
+                </option>
+
+            </select>
+        </div>
+
+        <button class="btn btn-success">Save</button>
+
+        <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Cancel</a>
+
+    </form>
+
+</div>
+
 {% endblock %}
