@@ -1,15 +1,17 @@
-def test_app_import():
-    from app import create_app
+from app import create_app, db
 
+
+def test_app_import():
     app = create_app()
     assert app is not None
 
 
 def test_app_responds():
-    from app import create_app
-
     app = create_app()
     app.config["TESTING"] = True
+
+    with app.app_context():
+        db.create_all()
 
     with app.test_client() as c:
         rv = c.get("/")
