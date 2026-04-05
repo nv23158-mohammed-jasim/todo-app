@@ -2,52 +2,183 @@
 
 {% block content %}
 
-<div class="container mt-4">
+<section class="hero-banner">
+    <h2>Todo App</h2>
+</section>
 
-    <h2 class="mb-3">Todo Tasks</h2>
-
-    <a href="{{ url_for('main.create_task') }}" class="btn btn-primary mb-3">New Task</a>
-
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Title</th>
-                <th>Description</th>
-                <th>Priority</th>
-                <th>Due Date</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            {% for task in tasks %}
-            <tr>
-                <td>{{ task.title }}</td>
-                <td>{{ task.description }}</td>
-                <td>{{ task.priority }}</td>
-                <td>
-                    {% if task.due_date %}
-                        {{ task.due_date.strftime("%Y-%m-%d") }}
-                    {% endif %}
-                </td>
-                <td>{{ task.status }}</td>
-
-                <td>
-                    <a href="{{ url_for('main.edit_task', task_id=task.id) }}" class="btn btn-sm btn-warning">Edit</a>
-
-                    <form action="{{ url_for('main.delete_task', task_id=task.id) }}"
-                          method="POST"
-                          style="display:inline;">
-                        <button class="btn btn-sm btn-danger">Delete</button>
-                    </form>
-                </td>
-
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
+<div class="dashboard-tabs" role="tablist" aria-label="Task views">
+    <a class="tab-btn {% if view == 'today' %}active{% endif %}" href="{{ url_for('main.index', view='today', q=q, status=status_filter, sort_by=sort_by) }}">Today</a>
+    <a class="tab-btn {% if view == 'pending' %}active{% endif %}" href="{{ url_for('main.index', view='pending', q=q, status=status_filter, sort_by=sort_by) }}">Pending</a>
+    <a class="tab-btn {% if view == 'overdue' %}active{% endif %}" href="{{ url_for('main.index', view='overdue', q=q, status=status_filter, sort_by=sort_by) }}">Overdue</a>
 </div>
 
+{% if due_soon_tasks %}
+<section class="due-alert panel-sm">
+    <h3>Deadline Reminder (next 24 hours)</h3>
+    <ul>
+        {% for task in due_soon_tasks %}
+        <li><strong>{{ task.title }}</strong> is due at {{ task.due_date.strftime("%Y-%m-%d %H:%M") }}</li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+
+<section class="panel tasks-panel">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h2 class="section-title mb-0">Tasks</h2>
+        <a href="{{ url_for('main.create_task') }}" class="btn btn-primary">+ Add Task</a>
+    </div>
+
+    <form method="GET" class="filters-row">
+        <input type="hidden" name="view" value="{{ view }}">
+        <input type="text" name="q" class="form-control" placeholder="Search tasks" value="{{ q }}">
+        <select name="status" class="form-select">
+            <option value="">All statuses</option>
+            <option value="todo" {% if status_filter == "todo" %}selected{% endif %}>Todo</option>
+            <option value="doing" {% if status_filter == "doing" %}selected{% endif %}>Doing</option>
+            <option value="done" {% if status_filter == "done" %}selected{% endif %}>Done</option>
+        </select>
+        <select name="sort_by" class="form-select">
+            <option value="created_at" {% if sort_by == "created_at" %}selected{% endif %}>Newest</option>
+            <option value="priority" {% if sort_by == "priority" %}selected{% endif %}>Priority</option>
+            <option value="due_date" {% if sort_by == "due_date" %}selected{% endif %}>Deadline</option>
+        </select>
+        <button class="btn btn-secondary" type="submit">Apply</button>
+    </form>
+
+    <div class="table-wrap mt-3">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Task</th>
+                    <th>Description</th>
+                    <th>Priority</th>
+                    <th>Deadline</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for task in tasks %}
+                <tr>
+                    <td class="fw-semibold">{{ task.title }}</td>
+                    <td>{{ task.description or '-' }}</td>
+                    <td>
+                        <span class="priority-pill p{{ task.priority if task.priority is not none else 1 }}">
+                            {% if task.priority == 3 %}
+                                Urgent
+                            {% elif task.priority == 2 %}
+                                High
+                            {% elif task.priority == 1 %}
+                                Medium
+                            {% else %}
+                                Low
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        {% if task.due_date %}
+                            {{ task.due_date.strftime("%Y-%m-%d %H:%M") }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="status-pill {{ task.status }}">{{ task.status }}</span>
+                    </td>
+
+                    <td>
+                        <div class="actions">
+                            <a href="{{ url_for('main.edit_task', task_id=task.id) }}" class="btn btn-sm btn-warning">Edit</a>
+
+                            <form action="{{ url_for('main.delete_task', task_id=task.id) }}"
+                                  method="POST"
+                                  class="inline-form">
+                                <button class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">No tasks found for this view.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="panel mt-3">
+    <h2 class="section-title">Weekly Performance</h2>
+    <p class="graph-subtitle">Completed tasks in the last 7 days</p>
+    <canvas id="weeklyPerformanceChart" height="110"></canvas>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+    const weeklyLabels = {{ weekly_labels|tojson }};
+    const weeklyData = {{ weekly_data|tojson }};
+    const dueNotifications = {{ due_notifications|tojson }};
+
+    const chartCanvas = document.getElementById("weeklyPerformanceChart");
+    if (chartCanvas) {
+        new Chart(chartCanvas, {
+            type: "line",
+            data: {
+                labels: weeklyLabels,
+                datasets: [{
+                    label: "Completed",
+                    data: weeklyData,
+                    borderColor: "#cf4545",
+                    backgroundColor: "rgba(207, 69, 69, 0.28)",
+                    tension: 0.35,
+                    fill: true,
+                    pointBackgroundColor: "#f17a7a",
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 }
+                    }
+                }
+            }
+        });
+    }
+
+    if ("Notification" in window && dueNotifications.length) {
+        const sendDeadlineNotifications = () => {
+            dueNotifications.forEach((item) => {
+                if (localStorage.getItem(item.storage_key)) {
+                    return;
+                }
+                new Notification("Task deadline in 24 hours", {
+                    body: `${item.title} is due at ${item.due_date}`,
+                    icon: "https://cdn-icons-png.flaticon.com/512/847/847969.png"
+                });
+                localStorage.setItem(item.storage_key, "shown");
+            });
+        };
+
+        if (Notification.permission === "granted") {
+            sendDeadlineNotifications();
+        } else if (Notification.permission !== "denied") {
+            Notification.requestPermission().then((permission) => {
+                if (permission === "granted") {
+                    sendDeadlineNotifications();
+                }
+            });
+        }
+    }
+</script>
 {% endblock %}
