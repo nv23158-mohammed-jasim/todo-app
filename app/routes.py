@@ -31,11 +31,13 @@ def _sanitize_priority(value, fallback=1):
 
 
 @bp.route("/")
+@bp.route("/tasks")
 def index():
     q = request.args.get("q", "").strip()
-    status_filter = request.args.get("status", "")
+    status_filter = request.args.get("status", "").strip().lower()
+    sort = request.args.get("sort", "").strip().lower()
     sort_by = request.args.get("sort_by", "created_at")
-    view = request.args.get("view", "today")
+    view = request.args.get("view", "all")
     now = datetime.now()
 
     query = Task.query
@@ -50,6 +52,8 @@ def index():
     # filter
     if status_filter in {"todo", "doing", "done"}:
         query = query.filter(Task.status == status_filter)
+    elif status_filter == "pending":
+        query = query.filter(Task.status != "done")
 
     if view == "today":
         start_of_today = datetime(now.year, now.month, now.day)
@@ -65,7 +69,9 @@ def index():
         query = query.filter(Task.status != "done", Task.due_date.isnot(None), Task.due_date < now)
 
     # sorting
-    if sort_by == "priority":
+    if sort in {"asc", "desc"}:
+        query = query.order_by(Task.id.desc() if sort == "desc" else Task.id.asc())
+    elif sort_by == "priority":
         query = query.order_by(Task.priority.desc())
     elif sort_by == "due_date":
         query = query.order_by(Task.due_date.asc())

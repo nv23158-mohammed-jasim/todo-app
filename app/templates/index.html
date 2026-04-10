@@ -7,6 +7,7 @@
 </section>
 
 <div class="dashboard-tabs" role="tablist" aria-label="Task views">
+    <a class="tab-btn {% if view == 'all' %}active{% endif %}" href="{{ url_for('main.index', view='all', q=q, status=status_filter, sort_by=sort_by) }}">All</a>
     <a class="tab-btn {% if view == 'today' %}active{% endif %}" href="{{ url_for('main.index', view='today', q=q, status=status_filter, sort_by=sort_by) }}">Today</a>
     <a class="tab-btn {% if view == 'pending' %}active{% endif %}" href="{{ url_for('main.index', view='pending', q=q, status=status_filter, sort_by=sort_by) }}">Pending</a>
     <a class="tab-btn {% if view == 'overdue' %}active{% endif %}" href="{{ url_for('main.index', view='overdue', q=q, status=status_filter, sort_by=sort_by) }}">Overdue</a>
