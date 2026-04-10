@@ -2,9 +2,9 @@
 
 {% block content %}
 
-<div class="container mt-4">
+<section class="panel">
 
-    <h2 class="mb-3">
+    <h2 class="section-title">
         {% if task %}
             Edit Task
         {% else %}
@@ -33,7 +33,12 @@
 
         <div class="mb-3">
             <label class="form-label">Priority</label>
-            <select name="priority" class="form-control">
+            <select name="priority" class="form-select">
+
+                <option value="3"
+                    {% if task and task.priority == 3 %}selected{% endif %}>
+                    Urgent
+                </option>
 
                 <option value="0"
                     {% if task and task.priority == 0 %}selected{% endif %}>
@@ -54,17 +59,19 @@
         </div>
 
         <div class="mb-3">
-            <label class="form-label">Due Date</label>
+            <label class="form-label">Deadline Date &amp; Time</label>
             <input
-                type="date"
+                type="datetime-local"
                 name="due_date"
                 class="form-control"
-                value="{{ task.due_date.strftime('%Y-%m-%d') if task and task.due_date else '' }}">
+                value="{{ task.due_date.strftime('%Y-%m-%dT%H:%M') if task and task.due_date else '' }}"
+                required>
+            <small class="form-help">Set the exact deadline (date and clock time).</small>
         </div>
 
         <div class="mb-3">
             <label class="form-label">Status</label>
-            <select name="status" class="form-control">
+            <select name="status" class="form-select">
 
                 <option value="todo"
                     {% if not task or task.status == "todo" %}selected{% endif %}>
@@ -90,6 +97,6 @@
 
     </form>
 
-</div>
+    </section>
 
 {% endblock %}
