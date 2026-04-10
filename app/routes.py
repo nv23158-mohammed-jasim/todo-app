@@ -191,4 +191,23 @@ def delete_task(task_id):
     db.session.delete(task)
     db.session.commit()
     return redirect(url_for("main.index"))
+
+
+@bp.route("/dashboard")
+def dashboard():
+    now = datetime.now()
+    total = Task.query.count()
+    completed = Task.query.filter(Task.status == "done").count()
+    pending = Task.query.filter(Task.status != "done").count()
+    overdue = Task.query.filter(Task.status != "done", Task.due_date.isnot(None), Task.due_date < now).count()
+    high_priority = Task.query.filter(Task.status != "done", Task.priority >= 2).count()
+
+    return render_template(
+        "dashboard.html",
+        total=total,
+        completed=completed,
+        pending=pending,
+        overdue=overdue,
+        high_priority=high_priority,
+    )
 # trigger CI
