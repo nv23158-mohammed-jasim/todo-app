@@ -15,6 +15,10 @@
     <header class="app-header">
         <h1 class="app-title">Task Workspace</h1>
         <p class="app-subtitle">Stay focused with deadlines, priorities, and progress tracking.</p>
+    <nav class="top-nav">
+      <a href="{{ url_for('main.index') }}">Tasks</a>
+      <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+    </nav>
     </header>
     {% with messages = get_flashed_messages() %}
       {% if messages %}
