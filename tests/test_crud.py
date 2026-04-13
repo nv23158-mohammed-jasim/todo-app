@@ -21,7 +21,10 @@ def test_create_task():
     with app.test_client() as client:
         resp = client.post(
             "/task/create",
-            data={"title": "Buy milk"},
+            data={
+                "title": "Buy milk",
+                "due_date": "2026-04-20T10:00"
+            },
             follow_redirects=True
         )
 
@@ -49,7 +52,10 @@ def test_update_task():
     with app.test_client() as client:
         resp = client.post(
             f"/task/{task_id}/edit",
-            data={"title": "New title"},
+            data={
+                "title": "New title",
+                "due_date": "2026-04-20T10:00"
+            },
             follow_redirects=True
         )
 
