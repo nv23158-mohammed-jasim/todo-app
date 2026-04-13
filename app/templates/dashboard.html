@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="panel">
+    <h2 class="section-title">Task Dashboard</h2>
+    <div class="stats-grid">
+        <article class="stat-card">
+            <h3>{{ total }}</h3>
+            <p>Total Tasks</p>
+        </article>
+        <article class="stat-card">
+            <h3>{{ completed }}</h3>
+            <p>Completed</p>
+        </article>
+        <article class="stat-card">
+            <h3>{{ pending }}</h3>
+            <p>Pending</p>
+        </article>
+        <article class="stat-card">
+            <h3>{{ overdue }}</h3>
+            <p>Overdue</p>
+        </article>
+        <article class="stat-card">
+            <h3>{{ high_priority }}</h3>
+            <p>High Priority Open</p>
+        </article>
+    </div>
+    <a href="{{ url_for('main.index') }}" class="btn btn-secondary mt-3">Back to Tasks</a>
+</section>
+{% endblock %}
