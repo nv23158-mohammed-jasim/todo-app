@@ -179,7 +179,9 @@ def edit_task(task_id):
             return render_template("task_form.html", task=task)
         task.due_date = parsed_due_date
 
-        task.status = request.form.get("status") if request.form.get("status") in {"todo", "doing", "done"} else task.status
+        status_val = request.form.get("status")
+        if status_val in {"todo", "doing", "done"}:
+            task.status = status_val
 
         if not task.title:
             flash("Title is required.")
